@@ -239,11 +239,6 @@ Through this project, I learned:
 
 ## Author
 
-**Your Name**  
-Course: Computer Networks  
-Semester: 4th Semester  
-Institution: [Your Institution Name]
-
 ## License
 
 This project is submitted for academic purposes as part of the Computer Networks course.
