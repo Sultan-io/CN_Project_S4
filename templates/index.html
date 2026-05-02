@@ -1,0 +1,344 @@
+<!-- templates/index.html -->
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Network Traffic Monitor</title>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='style.css') }}"
+    />
+  </head>
+  <body>
+    <div class="container">
+      <!-- Header -->
+      <h1>
+        <span class="header-icon">📡</span>
+        Network Traffic Monitor
+      </h1>
+
+      <!-- Control Buttons -->
+      <div class="control-section">
+        <button id="startBtn" class="btn btn-start">
+          <svg width="11" height="11" viewBox="0 0 10 10" fill="currentColor">
+            <polygon points="2,1 9,5 2,9" />
+          </svg>
+          Start Monitoring
+        </button>
+        <button id="stopBtn" class="btn btn-stop" disabled>
+          <svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor">
+            <rect x="1" y="1" width="8" height="8" rx="1" />
+          </svg>
+          Stop
+        </button>
+        <button id="clearLogsBtn" class="btn btn-clear">
+          <svg
+            width="11"
+            height="11"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.5"
+          >
+            <polyline points="3 6 5 6 21 6" />
+            <path d="M19 6l-1 14H6L5 6" />
+            <path d="M10 11v6M14 11v6" />
+          </svg>
+          Clear Logs
+        </button>
+        <button id="resetStatsBtn" class="btn btn-reset">
+          <svg
+            width="11"
+            height="11"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.5"
+          >
+            <polyline points="1 4 1 10 7 10" />
+            <path d="M3.51 15a9 9 0 1 0 .49-4" />
+          </svg>
+          Reset Stats
+        </button>
+        <button id="exportCsvBtn" class="btn btn-export">
+          <svg
+            width="11"
+            height="11"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.5"
+          >
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+            <polyline points="7 10 12 15 17 10" />
+            <line x1="12" y1="15" x2="12" y2="3" />
+          </svg>
+          Export CSV
+        </button>
+      </div>
+
+      <!-- Statistics Panel -->
+      <div class="panel stats-section">
+        <h2>
+          <span class="section-icon">📈</span>
+          Live Statistics
+        </h2>
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-label">Total Packets</div>
+            <div class="stat-value" id="totalPackets">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">TCP</div>
+            <div class="stat-value" id="tcpCount">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">UDP</div>
+            <div class="stat-value" id="udpCount">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">ICMP</div>
+            <div class="stat-value" id="icmpCount">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Avg Packet Size</div>
+            <div class="stat-value" id="avgSize">0</div>
+            <div class="stat-unit">bytes</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Filter Panel -->
+      <div class="panel filter-section">
+        <h2>
+          <span class="section-icon">🔍</span>
+          Filter Packets
+        </h2>
+        <div class="filter-controls">
+          <div class="filter-group">
+            <label>Protocol</label>
+            <select id="protocolFilter">
+              <option value="ALL">All Protocols</option>
+              <option value="TCP">TCP</option>
+              <option value="UDP">UDP</option>
+              <option value="ICMP">ICMP</option>
+            </select>
+          </div>
+
+          <div class="filter-group">
+            <label>Source IP</label>
+            <input
+              type="text"
+              id="srcIpFilter"
+              placeholder="e.g. 192.168.1.1"
+            />
+          </div>
+
+          <div class="filter-group">
+            <label>Destination IP</label>
+            <input type="text" id="dstIpFilter" placeholder="e.g. 8.8.8.8" />
+          </div>
+
+          <div class="filter-buttons">
+            <button id="applyFilterBtn" class="btn btn-filter">
+              <svg
+                width="11"
+                height="11"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.5"
+              >
+                <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
+              </svg>
+              Apply
+            </button>
+            <button id="resetFilterBtn" class="btn btn-reset-filter">
+              Reset
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Packet Log Panel -->
+      <div class="panel logs-section">
+        <div class="logs-header">
+          <h2 style="margin-bottom: 0">
+            <span class="section-icon">📋</span>
+            Packet Logs
+          </h2>
+          <span id="logCount" class="log-count">— records</span>
+        </div>
+
+        <div class="table-wrapper">
+          <table id="packetTable">
+            <thead>
+              <tr>
+                <th>Timestamp</th>
+                <th>Source IP</th>
+                <th>Dest IP</th>
+                <th>Protocol</th>
+                <th>Size</th>
+                <th>Src Port</th>
+                <th>Dst Port</th>
+                <th>Service</th>
+              </tr>
+            </thead>
+            <tbody id="packetTableBody">
+              <tr>
+                <td colspan="8" class="no-data">
+                  No packets captured yet — click
+                  <strong>Start Monitoring</strong> to begin
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <!-- /.container -->
+
+    <script>
+      let refreshInterval = null;
+
+      async function fetchData() {
+        const protocol = document.getElementById("protocolFilter").value;
+        const srcIp = document.getElementById("srcIpFilter").value;
+        const dstIp = document.getElementById("dstIpFilter").value;
+        const url = `/get_data?protocol=${encodeURIComponent(protocol)}&src_ip=${encodeURIComponent(srcIp)}&dst_ip=${encodeURIComponent(dstIp)}`;
+
+        try {
+          const response = await fetch(url);
+          const data = await response.json();
+
+          document.getElementById("totalPackets").textContent =
+            data.statistics.total_packets;
+          document.getElementById("tcpCount").textContent =
+            data.statistics.tcp_count;
+          document.getElementById("udpCount").textContent =
+            data.statistics.udp_count;
+          document.getElementById("icmpCount").textContent =
+            data.statistics.icmp_count;
+          document.getElementById("avgSize").textContent =
+            data.statistics.avg_packet_size;
+
+          document.getElementById("logCount").textContent =
+            `${data.filtered_count} records`;
+
+          const tbody = document.getElementById("packetTableBody");
+          if (data.logs.length === 0) {
+            tbody.innerHTML =
+              '<tr><td colspan="8" class="no-data">No packets match the current filter</td></tr>';
+          } else {
+            tbody.innerHTML = data.logs
+              .map(
+                (log) => `
+              <tr>
+                <td>${log.timestamp}</td>
+                <td>${log.src_ip}</td>
+                <td>${log.dst_ip}</td>
+                <td><span class="protocol ${log.protocol.toLowerCase()}">${log.protocol}</span></td>
+                <td>${log.packet_size}</td>
+                <td>${log.src_port}</td>
+                <td>${log.dst_port}</td>
+                <td><span class="service-badge">${log.service}</span></td>
+              </tr>
+            `,
+              )
+              .join("");
+          }
+        } catch (err) {
+          console.error("Error fetching data:", err);
+        }
+      }
+
+      async function startMonitoring() {
+        try {
+          const response = await fetch("/start", { method: "POST" });
+          const result = await response.json();
+          if (result.status === "success") {
+            document.getElementById("startBtn").disabled = true;
+            document.getElementById("stopBtn").disabled = false;
+            if (refreshInterval) clearInterval(refreshInterval);
+            refreshInterval = setInterval(fetchData, 1000);
+            alert("Monitoring started!");
+          } else {
+            alert("Error: " + result.message);
+          }
+        } catch {
+          alert("Failed to start monitoring. Run with admin/sudo privileges.");
+        }
+      }
+
+      async function stopMonitoring() {
+        try {
+          const response = await fetch("/stop", { method: "POST" });
+          const result = await response.json();
+          if (result.status === "success") {
+            document.getElementById("startBtn").disabled = false;
+            document.getElementById("stopBtn").disabled = true;
+            if (refreshInterval) {
+              clearInterval(refreshInterval);
+              refreshInterval = null;
+            }
+            alert("Monitoring stopped.");
+          } else {
+            alert("Error: " + result.message);
+          }
+        } catch {
+          alert("Error stopping monitoring");
+        }
+      }
+
+      async function clearLogs() {
+        await fetch("/clear_logs", { method: "POST" });
+        fetchData();
+      }
+      async function resetStats() {
+        await fetch("/reset_stats", { method: "POST" });
+        fetchData();
+      }
+
+      function applyFilter() {
+        fetchData();
+      }
+
+      function resetFilter() {
+        document.getElementById("protocolFilter").value = "ALL";
+        document.getElementById("srcIpFilter").value = "";
+        document.getElementById("dstIpFilter").value = "";
+        fetchData();
+      }
+
+      function exportToCSV() {
+        window.location.href = "/export_csv";
+      }
+
+      document
+        .getElementById("startBtn")
+        .addEventListener("click", startMonitoring);
+      document
+        .getElementById("stopBtn")
+        .addEventListener("click", stopMonitoring);
+      document
+        .getElementById("clearLogsBtn")
+        .addEventListener("click", clearLogs);
+      document
+        .getElementById("resetStatsBtn")
+        .addEventListener("click", resetStats);
+      document
+        .getElementById("applyFilterBtn")
+        .addEventListener("click", applyFilter);
+      document
+        .getElementById("resetFilterBtn")
+        .addEventListener("click", resetFilter);
+      document
+        .getElementById("exportCsvBtn")
+        .addEventListener("click", exportToCSV);
+
+      fetchData();
+      setInterval(fetchData, 2000);
+    </script>
+  </body>
+</html>
