@@ -200,17 +200,6 @@ Ensure folder is named `templates` (with 's') and contains `index.html`
 ### Scapy import error on Windows
 Install Npcap from https://npcap.com and restart your computer
 
-## Sample Dataset
-
-The `network_dataset.csv` file contains sample packet data for reference:
-
-```csv
-Time,Source IP,Destination IP,Protocol,Packet Size,Source Port,Destination Port
-10:35:21,192.168.1.5,8.8.8.8,TCP,512,52341,80
-10:35:22,192.168.1.5,8.8.4.4,UDP,128,52342,53
-10:35:23,10.0.0.2,192.168.1.1,ICMP,84,0,0
-```
-
 ## Learning Outcomes
 
 Through this project, I learned:
@@ -237,8 +226,6 @@ Through this project, I learned:
 - Save packet captures to PCAP format
 - Implement packet capture filters (BPF filters)
 
-## Author
-
 ## License
 
 This project is submitted for academic purposes as part of the Computer Networks course.
@@ -247,5 +234,4 @@ This project is submitted for academic purposes as part of the Computer Networks
 
 - Scapy documentation for packet manipulation
 - Flask documentation for web framework
-- Course instructor for project guidance
 ```
