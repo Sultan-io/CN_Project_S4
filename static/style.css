@@ -272,6 +272,18 @@ h2 .section-icon {
   box-shadow: var(--glow-primary);
 }
 
+/* Import CSV button - matches export style with distinct accent */
+.btn-import {
+  background: rgba(168, 85, 247, 0.1);
+  color: #c084fc;
+  border-color: rgba(168, 85, 247, 0.25);
+}
+.btn-import:hover {
+  background: rgba(168, 85, 247, 0.18);
+  border-color: #c084fc;
+  box-shadow: 0 0 16px rgba(168, 85, 247, 0.3);
+}
+
 .btn-filter {
   background: rgba(45, 212, 191, 0.1);
   color: var(--accent-teal);

@@ -37,6 +37,7 @@ class PacketSniffer:
             return "Already sniffing"
 
         self.sniffing = True
+        # run the _sniff_loop method in this thread, thread will exit automatically when main program exits
         self.sniffer_thread = threading.Thread(target=self._sniff_loop, daemon=True)
         self.sniffer_thread.start()
         return "Sniffing started"

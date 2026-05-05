@@ -5,7 +5,10 @@ from flask import Flask, render_template, request, jsonify
 from sniffer import PacketSniffer
 from logger import PacketLogger
 from statistics import Statistics
+from packet_processor import parse_packet, get_service
 import threading
+import csv
+from io import TextIOWrapper
 
 app = Flask(__name__)
 
@@ -151,6 +154,91 @@ def export_csv():
             "Content-Disposition": "attachment; filename=network_traffic_export.csv"
         },
     )
+
+
+@app.route("/import_csv", methods=["POST"])
+def import_csv():
+    """Import packet logs from a CSV file"""
+    global packet_logger, stats
+
+    # Check if file was uploaded
+    if "file" not in request.files:
+        return jsonify({"status": "error", "message": "No file uploaded"})
+
+    file = request.files["file"]
+
+    if file.filename == "":
+        return jsonify({"status": "error", "message": "No file selected"})
+
+    if not file.filename.endswith(".csv"):
+        return jsonify({"status": "error", "message": "Please upload a CSV file"})
+
+    try:
+        # Read the CSV file
+        from io import StringIO
+
+        csv_content = StringIO(file.read().decode("utf-8"))
+        csv_reader = csv.DictReader(csv_content)
+
+        # Expected columns
+        expected_columns = [
+            "Timestamp",
+            "Source IP",
+            "Destination IP",
+            "Protocol",
+            "Packet Size (bytes)",
+            "Source Port",
+            "Destination Port",
+            "Service",
+        ]
+
+        imported_logs = []
+        packet_count = 0
+
+        for row in csv_reader:
+            # Handle different column name variations
+            timestamp = row.get("Timestamp", row.get("Time", ""))
+            src_ip = row.get("Source IP", row.get("Source IP Address", ""))
+            dst_ip = row.get("Destination IP", row.get("Destination IP Address", ""))
+            protocol = row.get("Protocol", "")
+            packet_size = int(row.get("Packet Size (bytes)", row.get("Packet Size", 0)))
+            src_port = int(row.get("Source Port", row.get("Src Port", 0)))
+            dst_port = int(row.get("Destination Port", row.get("Dst Port", 0)))
+            service = row.get("Service", get_service(dst_port, protocol))
+
+            # Create log entry
+            log_entry = {
+                "timestamp": timestamp,
+                "src_ip": src_ip,
+                "dst_ip": dst_ip,
+                "protocol": protocol,
+                "packet_size": packet_size,
+                "src_port": src_port,
+                "dst_port": dst_port,
+                "service": service,
+            }
+
+            imported_logs.append(log_entry)
+
+            # Also update statistics
+            stats.update(log_entry)
+            packet_count += 1
+
+        # Clear current logs and add imported ones
+        packet_logger.clear_logs()
+        for log in imported_logs:
+            packet_logger.add_packet(log)
+
+        return jsonify(
+            {
+                "status": "success",
+                "message": f"Successfully imported {packet_count} packets",
+                "count": packet_count,
+            }
+        )
+
+    except Exception as e:
+        return jsonify({"status": "error", "message": f"Error reading CSV: {str(e)}"})
 
 
 if __name__ == "__main__":
